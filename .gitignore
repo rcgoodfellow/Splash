@@ -19,3 +19,12 @@
 *.exe
 *.out
 *.app
+LinearAlgebraBasicTests
+
+# vim
+*.swo
+*.swp
+
+# Apple
+*.dSYM
+
