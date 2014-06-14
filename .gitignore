@@ -20,6 +20,8 @@
 *.out
 *.app
 LinearAlgebraBasicTests
+build
+Build
 
 # vim
 *.swo

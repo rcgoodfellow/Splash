@@ -1,7 +1,6 @@
 #include "SparseMatrix.h"
 
-
-#ifndef _OPENCL_VERSION_
+#ifndef __OPENCL_VERSION__
 SparseMatrix* create_EmptySparseMatrix(unsigned int N, unsigned int n)
 {
   SparseMatrix *sm = (SparseMatrix*)malloc(sizeof(SparseMatrix));
@@ -42,19 +41,19 @@ void destroy_DenseVector(DenseVector *v)
 
 void sm_print(SparseMatrix *M)
 {
-  for(int i=0; i<M->N; ++i)
+  for(unsigned int i=0; i<M->N; ++i)
   {
     unsigned int rsz = M->row_sizes[i];
     printf("%u,%u\n", i, rsz);
     printf("[");
-    for(int j=0; j<rsz; ++j)
+    for(unsigned int j=0; j<rsz; ++j)
     {
       printf("%d,", M->indices[i * M->n + j]);
     }
     printf("]\n");
 
     printf("[");
-    for(int j=0; j<rsz; ++j)
+    for(unsigned int j=0; j<rsz; ++j)
     {
       printf("%f,", M->values[i * M->n + j]);
     }
@@ -93,7 +92,7 @@ void mrshift(byte *begin, byte *end, unsigned int count, unsigned int size)
 
 void mset(byte *data, unsigned int size, byte *tgt)
 {
-  for(int i=0; i<size; ++i) { tgt[i] = data[i]; }
+  for(unsigned int i=0; i<size; ++i) { tgt[i] = data[i]; }
 }
 
 void insert(byte *begin, byte *end, byte *val, unsigned int offset, unsigned int size)

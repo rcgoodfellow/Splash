@@ -10,7 +10,7 @@ typedef char byte;
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
-#include <OpenCL/cl.h>
+#include <CL/cl.h>
 
 typedef cl_float REAL;
 

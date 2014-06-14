@@ -5,7 +5,9 @@
 #include <stddef.h>
 #include <stdio.h>
 
-#include <OpenCL/cl.h>
+#include <CL/cl.h>
+
+#define SPLASHDIR "/home/ry/Splash/"
 
 int main()
 {
@@ -98,10 +100,15 @@ int main()
   }
 
   //program compilation
-  char *source = read_file("MatrixVector.cl");
-  if(!source){ exit(-1); }
+  char *sm_source = read_file(SPLASHDIR "SparseMatrix.c");
+  char *mv_source = read_file(SPLASHDIR "MatrixVector.cl");
+  
+  if(!mv_source || !sm_source){ exit(-1); }
 
-  cl_program program = clCreateProgramWithSource(context, 1, (const char**)&source, NULL, &err);
+  const char *sources[2] = {mv_source, sm_source};
+
+  cl_program program = clCreateProgramWithSource(context, 2, 
+		  sources, NULL, &err);
   if(err)
   {
     printf("Error while creating OpenCL program %d\n", err);
@@ -112,7 +119,8 @@ int main()
     printf("OpenCL program created\n");
   }
 
-  err = clBuildProgram(program, 1, &device, NULL, NULL, NULL);
+  const char* opts = "-I " SPLASHDIR;
+  err = clBuildProgram(program, 1, &device, opts, NULL, NULL);
   if(err != CL_SUCCESS)
   {
     printf("Error while building OpenCL program %d\n", err);
@@ -128,7 +136,6 @@ int main()
     exit(err);
   }
 
-  free(source);
   destroy_DenseVector(v);
   destroy_SparseMatrix(M);
   return EXIT_SUCCESS;
