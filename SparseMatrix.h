@@ -50,6 +50,7 @@ void sm_print(SparseMatrix *M);
 #endif
 
 void sm_set(SparseMatrix *M, unsigned int row, unsigned int col, REAL val);
+void dv_set(DenseVector *V, unsigned int row, REAL val);
 
 
 //TODO

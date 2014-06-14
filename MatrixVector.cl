@@ -3,7 +3,7 @@
 __kernel 
 void 
 matrix_vector_mul(unsigned int n,
-	          unsigned int N,
+      unsigned int N,
 		  __global REAL *sm_values, 
 		  __global unsigned int *row_sizes,
 		  __global unsigned int *indices,
