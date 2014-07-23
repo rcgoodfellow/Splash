@@ -1,7 +1,7 @@
 #include "Utility.h"
 #include <stdio.h>
 
-char* read_file(const char* filename)
+char* read_file(const char* filename, size_t *_sz)
 {
   FILE *f = fopen(filename, "r");
 
@@ -21,5 +21,8 @@ char* read_file(const char* filename)
   //Null terminate
   data[sz] = '\0';
 
+  if(_sz) {
+    *_sz = sz;
+  }
   return data;
 }

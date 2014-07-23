@@ -10,14 +10,13 @@ matrix_vector_mul(unsigned int n,
 		  __global REAL *dv_values,
 		  __global REAL *mv_values)
 {
-    
-    int tid = get_global_id(0);
-    int ri = tid * n, 
-        rs = row_sizes[tid];
+  int tid = get_global_id(0);
+  int ri = tid * n, 
+      rs = row_sizes[tid];
 
-    mv_values[tid] = 0;
-    for(int i=0; i<rs; ++i)
-    {
-        mv_values[tid] += sm_values[ri + i] * dv_values[indices[ri + i]];
-    }
+  mv_values[tid] = 0;
+  for(int i=0; i<rs; ++i)
+  {
+      mv_values[tid] += sm_values[ri + i] * dv_values[indices[ri + i]];
+  }
 }

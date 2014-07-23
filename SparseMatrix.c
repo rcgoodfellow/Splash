@@ -95,7 +95,8 @@ void mset(byte *data, unsigned int size, byte *tgt)
   for(unsigned int i=0; i<size; ++i) { tgt[i] = data[i]; }
 }
 
-void insert(byte *begin, byte *end, byte *val, unsigned int offset, unsigned int size)
+void insert(byte *begin, byte *end, byte *val, unsigned int offset, 
+    unsigned int size)
 {
   mrshift(begin + offset * size, end, 1, size);
   mset(val, size, begin + offset * size);
