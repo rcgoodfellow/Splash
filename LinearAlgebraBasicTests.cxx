@@ -27,7 +27,6 @@ void initOclEnv() {
 }
 
 void loadPrograms() {
-
   vector<string> srcs{
     SPLASHDIR "SparseMatrix.c",
     SPLASHDIR "MatrixVector.cl"};
@@ -37,7 +36,6 @@ void loadPrograms() {
     cl::Program *prog = pg.loadProgram(srcs, build_opt); 
     pg.loadKernel(prog, "matrix_vector_mul");
   } 
-
 }
 
 void loadData() {

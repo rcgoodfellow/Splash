@@ -125,4 +125,3 @@ void dv_set(DenseVector *V, unsigned int row, REAL val)
   V->values[row] = val;
 }
 
-
