@@ -1,3 +1,5 @@
+#include "API.h"
+
 extern "C"{
 #include "SparseMatrix.h"
 #include "Utility.h"
@@ -114,17 +116,12 @@ void enqueueKernels() {
   for(auto &pg : pgroups) {
     cl::Kernel *k = pg.kernels.at("matrix_vector_mul");
     for(auto &q : pg.gqs) {
-      cl_int err = 
       q.enqueueNDRangeKernel(
           *k,
           cl::NullRange,
           cl::NDRange(M->N),
           cl::NDRange(1)
       );
-      if(err != CL_SUCCESS) {
-        throw runtime_error("error enqueuing matrix_vector_mul kernel for"
-            + string(" platform ") + pg.platform.getInfo<CL_PLATFORM_NAME>());
-      }
     }
   }
 }
@@ -132,17 +129,12 @@ void enqueueKernels() {
 void collectResults() {
   for(auto &pg : pgroups) {
     for(auto &q : pg.gqs) {
-      cl_int err = 
       q.enqueueReadBuffer(
           *pg.bufs.at("Mv"),
           CL_TRUE, //blocking read
           0, //offsett
           sizeof(REAL) * Mv->N,
           Mv->values);
-      if(err != CL_SUCCESS) {
-        throw runtime_error("fail to read back matrix_vector_mul results for"
-            + string(" platform ") + pg.platform.getInfo<CL_PLATFORM_NAME>());
-      }
     }
   }
 }
