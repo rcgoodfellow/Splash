@@ -1,44 +1,17 @@
-
-#define __CL_ENABLE_EXCEPTIONS
-#include <CL/cl.hpp>
-
-#include "API.h"
-
-extern "C"{
-#include "SparseMatrix.h"
-}
-#include "Utility.hxx"
-
 #include "Runtime.hxx"
-
-#include <stdlib.h>
-#include <stddef.h>
-#include <stdio.h>
-
-#include <vector>
-#include <stdexcept>
+#include "SparseMatrix.h" 
 #include <iostream>
-#include <utility>
 
-
-
-
-
-#define SPLASHDIR "/home/ry/Splash/"
-
-using std::runtime_error;
 using std::vector;
 using std::cout;
 using std::endl;
 using std::to_string;
 using std::string;
-using std::pair;
-
 using namespace splash;
 
-vector<PlatformGroup> pgroups;
-char *sm_source{nullptr}, *mv_source{nullptr};
+#define SPLASHDIR "/home/ry/Splash/"
 
+vector<PlatformGroup> pgroups;
 SparseMatrix *M;
 DenseVector *v;
 DenseVector *Mv; 
@@ -164,4 +137,3 @@ int main()
 
   return EXIT_SUCCESS;
 }
-
