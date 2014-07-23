@@ -7,6 +7,6 @@
 # define API
 #endif
 
-#define __CL_ENABLE_EXCEPTIONS 5
+#define __CL_ENABLE_EXCEPTIONS
 
 #endif

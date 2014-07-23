@@ -9,7 +9,7 @@ SET(CMAKE_EXE_LINKER_FLAGS "-std=c++11")
 SET(CMAKE_MODULE_LINKER_FLAGS "-std=c++11")
 SET(CMAKE_SHARED_LINKER_FLAGS "-std=c++11")
 
-ADD_LIBRARY(SplashCore SHARED SparseMatrix.c SparseMatrix.h Utility.c Utility.h)
+ADD_LIBRARY(SplashCore SHARED Utility.cxx SparseMatrix.c SparseMatrix.h Utility.hxx)
 ADD_LIBRARY(SplashRuntime SHARED Runtime.cxx Runtime.hxx)
 
 ADD_EXECUTABLE(LinearAlgebraBasicTests LinearAlgebraBasicTests.cxx)

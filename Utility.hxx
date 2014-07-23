@@ -4,7 +4,9 @@
 #include "API.h"
 
 #include <stdlib.h>
+#include <string>
+#include <stdexcept>
 
-API char* read_file(const char* filename, size_t *sz);
+std::string read_file(std::string filename);
 
 #endif

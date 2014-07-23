@@ -5,6 +5,7 @@ using std::runtime_error;
 using std::to_string;
 using std::vector;
 
+
 void PlatformGroup::resolveGPUs() {
   platform.getDevices(CL_DEVICE_TYPE_GPU, &gpus);
 }
@@ -46,37 +47,48 @@ std::vector<PlatformGroup> splash::resolvePlatformGroups()
       if(err != CL_SUCCESS) {
         throw runtime_error{"failed to create command queue for platform " +
           pg.platform.getInfo<CL_PLATFORM_NAME>() + std::to_string(err) };
-      }
-
-    }
-      
+      }}
     pgroups.push_back(pg);
-
   }
-
   return pgroups;
 }
 
+#include <iostream>
+  
+cl::Program* 
+PlatformGroup::loadProgram(std::vector<std::string> filenames, 
+    std::string build_opts) {
+  cl::Program::Sources *src = new cl::Program::Sources;
+  for(std::string fn : filenames) {
+    std::string *s = new std::string(read_file(fn));
+    src->push_back(std::make_pair(s->c_str(), s->length()));
+    //std::cout << s.c_str() << std::endl;
+
+  }
+  return loadProgram(src, build_opts.c_str());
+}
+
 cl::Program*
-PlatformGroup::loadProgram(cl::Program::Sources src, const char *build_opts) {
-  cl::Program *p = new cl::Program(ctx, src);
-  try { p->build(build_opts); }
-  catch(...) {
+PlatformGroup::loadProgram(cl::Program::Sources *src, std::string build_opts) {
+  cl::Program *p = new cl::Program(ctx, *src);
+  try {p->build(build_opts.c_str()); }
+  catch(cl::Error &) {
     std::string build_log{};
     for(auto &g : gpus) {
       build_log += p->getBuildInfo<CL_PROGRAM_BUILD_LOG>(g);
     }
-    throw runtime_error("program build failure: " + build_log);
+    throw runtime_error("exc program build failure: " + build_log);
   }
+  sources.push_back(src);
   progs.push_back(p);
   return p;
 }
 
 cl::Kernel* PlatformGroup::loadKernel(cl::Program *p, std::string name) {
-  cl_int err{CL_SUCCESS};
-  cl::Kernel *k = new cl::Kernel(*p, name.c_str(), &err);
-  if(err != CL_SUCCESS) {
-    throw runtime_error("unkown kernel `" + name + "`");
+  cl::Kernel *k;
+  try{k = new cl::Kernel(*p, name.c_str());}
+  catch(cl::Error&) {
+    throw runtime_error("exc: unkown kernel `" + name + "`");
   }
   kernels[name] = k;
   return k;
@@ -85,11 +97,11 @@ cl::Kernel* PlatformGroup::loadKernel(cl::Program *p, std::string name) {
 cl::Buffer* 
 PlatformGroup::loadBuffer(std::string name, cl_mem_flags mem_flags, 
     size_t data_size, void *host_ptr) {
-  cl_int err{CL_SUCCESS};
-  cl::Buffer *b = new cl::Buffer(ctx, mem_flags, data_size, host_ptr, &err);
-  if(err != CL_SUCCESS) {
+  cl::Buffer *b;
+  try{b = new cl::Buffer(ctx, mem_flags, data_size, host_ptr);}
+  catch(cl::Error&){
     throw runtime_error("error creating buffer for platform " 
-        + platform.getInfo<CL_PLATFORM_NAME>() + " " + std::to_string(err));
+        + platform.getInfo<CL_PLATFORM_NAME>());
   }
   bufs[name] = b;
   return b;

@@ -1,9 +1,13 @@
+
+#define __CL_ENABLE_EXCEPTIONS
+#include <CL/cl.hpp>
+
 #include "API.h"
 
 extern "C"{
 #include "SparseMatrix.h"
-#include "Utility.h"
 }
+#include "Utility.hxx"
 
 #include "Runtime.hxx"
 
@@ -16,8 +20,9 @@ extern "C"{
 #include <iostream>
 #include <utility>
 
-#include <CL/cl.h>
-#include <CL/cl.hpp>
+
+
+
 
 #define SPLASHDIR "/home/ry/Splash/"
 
@@ -49,17 +54,14 @@ void initOclEnv() {
 }
 
 void loadPrograms() {
-  size_t sm_sz, mv_sz;
-  sm_source = read_file(SPLASHDIR "SparseMatrix.c", &sm_sz);
-  mv_source = read_file(SPLASHDIR "MatrixVector.cl", &mv_sz);
-  cl::Program::Sources src{
-    std::make_pair(sm_source, sm_sz), 
-    std::make_pair(mv_source, mv_sz)
-  };
 
-  const char *build_opt = "-I " SPLASHDIR;
+  vector<string> srcs{
+    SPLASHDIR "SparseMatrix.c",
+    SPLASHDIR "MatrixVector.cl"};
+
+  string build_opt = string("-I ") + SPLASHDIR;
   for(PlatformGroup &pg : pgroups) { 
-    cl::Program *prog = pg.loadProgram(src, build_opt); 
+    cl::Program *prog = pg.loadProgram(srcs, build_opt); 
     pg.loadKernel(prog, "matrix_vector_mul");
   } 
 
@@ -67,35 +69,18 @@ void loadPrograms() {
 
 void loadData() {
   for(auto &pg : pgroups) {
+    cl_mem_flags RC = CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR;
+
     //the matrix itself
-    pg.loadBuffer("M", 
-        CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, 
-        sizeof(REAL) * M->N * M->n,
-        M->values);
-
+    pg.loadBuffer("M", RC, sizeof(REAL) * M->N * M->n, M->values);
     //row sizes
-    pg.loadBuffer("M_ri",
-        CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-        sizeof(unsigned int) * M->N,
-        M->row_sizes);
-
+    pg.loadBuffer("M_ri", RC, sizeof(unsigned int) * M->N, M->row_sizes);
     //indices
-    pg.loadBuffer("M_idx",
-        CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-        sizeof(unsigned int) * M->N * M->n,
-        M->indices);
-
+    pg.loadBuffer("M_idx", RC, sizeof(unsigned int) * M->N * M->n, M->indices);
     //vector values
-    pg.loadBuffer("v",
-        CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-        sizeof(unsigned int) * v->N,
-        v->values);
-
+    pg.loadBuffer("v", RC, sizeof(unsigned int) * v->N, v->values);
     //result vector
-    pg.loadBuffer("Mv",
-        CL_MEM_WRITE_ONLY,
-        sizeof(REAL) * v->N,
-        nullptr);
+    pg.loadBuffer("Mv", CL_MEM_WRITE_ONLY, sizeof(REAL) * v->N, nullptr);
   }
 }
 
@@ -116,42 +101,24 @@ void enqueueKernels() {
   for(auto &pg : pgroups) {
     cl::Kernel *k = pg.kernels.at("matrix_vector_mul");
     for(auto &q : pg.gqs) {
-      q.enqueueNDRangeKernel(
-          *k,
-          cl::NullRange,
-          cl::NDRange(M->N),
-          cl::NDRange(1)
-      );
-    }
-  }
+      q.enqueueNDRangeKernel(*k, cl::NullRange, cl::NDRange(M->N), 
+          cl::NDRange(1));
+    }}
 }
 
 void collectResults() {
-  for(auto &pg : pgroups) {
-    for(auto &q : pg.gqs) {
-      q.enqueueReadBuffer(
-          *pg.bufs.at("Mv"),
-          CL_TRUE, //blocking read
-          0, //offsett
-          sizeof(REAL) * Mv->N,
-          Mv->values);
-    }
-  }
+  for(auto &pg : pgroups) { for(auto &q : pg.gqs) {
+    q.enqueueReadBuffer(*pg.bufs.at("Mv"), CL_TRUE, 0, sizeof(REAL) * Mv->N,
+        Mv->values);
+  }}
 }
 
-void printResults()
-{
+void printResults() {
   printf("Results *********************\n");
-  for(unsigned int i=0; i<Mv->N; ++i)
-  {
-    printf("%f\n", Mv->values[i]);  
-  }
+  for(unsigned int i=0; i<Mv->N; ++i) { printf("%f\n", Mv->values[i]); }
 }
 
-int main()
-{
-  printf("%s", "Running basic linear algebra tests\n");
-
+void buildMatricies() {
   M = create_EmptySparseMatrix(5, 4);
   v = create_DenseVector(5);
   Mv = create_DenseVector(5);
@@ -180,7 +147,13 @@ int main()
   dv_set(v, 2, 5.6);
   dv_set(v, 3, 6.7);
   dv_set(v, 4, 7.8);
+}
 
+int main()
+{
+  printf("%s", "Running basic linear algebra tests\n");
+
+  buildMatricies();
   initOclEnv();
   loadPrograms();
   loadData();
