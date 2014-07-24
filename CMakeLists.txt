@@ -28,3 +28,6 @@ TARGET_LINK_LIBRARIES(DataTransferBench SplashCore SplashRuntime OpenCL)
 ADD_EXECUTABLE(VectorNormTests VectorNormTests.cxx)
 TARGET_LINK_LIBRARIES(VectorNormTests SplashCore SplashRuntime OpenCL)
 
+ADD_EXECUTABLE(SparseMatrixVectorMulTest SparseMatrixVectorMulTest.cxx)
+TARGET_LINK_LIBRARIES(SparseMatrixVectorMulTest SplashCore SplashRuntime OpenCL)
+

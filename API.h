@@ -10,9 +10,11 @@
   #endif
   #define __CL_ENABLE_EXCEPTIONS
   typedef cl_double REAL;
+  #define GLOBAL
 #else
   typedef double REAL;
   #define API
+  #define GLOBAL global
 //  #pragma OPENCL EXTENSION cl_khr_fp64 : enable
 #endif
 

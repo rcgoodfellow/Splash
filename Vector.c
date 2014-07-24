@@ -23,7 +23,7 @@ void dv_set(DenseVector *V, unsigned int row, REAL val)
 
 
 REAL
-vector_norm_2(REAL *x, unsigned int N)
+vector_norm_2(GLOBAL REAL *x, unsigned int N)
 {
   REAL s = 0;
   for(unsigned int i=0; i<N; ++i) {

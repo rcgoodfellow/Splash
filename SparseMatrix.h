@@ -17,7 +17,7 @@ typedef char byte;
 
 typedef struct SparseMatrix
 {
-  unsigned int N, n;
+  unsigned int N, n; //N = rows, n = max row valence
   unsigned int *row_sizes;
   unsigned int *indices;
   REAL *values;

@@ -1,4 +1,4 @@
-#include "SparseMatrix.h"
+#include "API.h"
 
 __kernel 
 void 
@@ -13,6 +13,8 @@ matrix_vector_mul(unsigned int n,
   int tid = get_global_id(0);
   int ri = tid * n, 
       rs = row_sizes[tid];
+
+  //__local l_sm_values[
 
   mv_values[tid] = 0;
   for(int i=0; i<rs; ++i)
