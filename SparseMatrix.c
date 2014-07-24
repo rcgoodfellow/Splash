@@ -25,20 +25,6 @@ void destroy_SparseMatrix(SparseMatrix *M)
   M->values = NULL;
 }
 
-DenseVector* create_DenseVector(unsigned int N)
-{
-  DenseVector *v = (DenseVector*)malloc(sizeof(DenseVector));
-  v->N = N;
-  v->values = (REAL*)malloc(sizeof(REAL)*N);
-  return v;
-}
-
-void destroy_DenseVector(DenseVector *v)
-{
-  free(v->values);
-  v->values = NULL;
-}
-
 void sm_print(SparseMatrix *M)
 {
   for(unsigned int i=0; i<M->N; ++i)
@@ -120,8 +106,4 @@ void sm_set(SparseMatrix *M, unsigned int row, unsigned int col, REAL val)
   }
 }
 
-void dv_set(DenseVector *V, unsigned int row, REAL val)
-{
-  V->values[row] = val;
-}
 

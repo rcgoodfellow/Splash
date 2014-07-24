@@ -1,6 +1,7 @@
 #include "Runtime.hxx"
-#include "SparseMatrix.h" 
+#include "SparseMatrix.hxx"
 #include <iostream>
+#include <chrono>
 
 using std::vector;
 using std::cout;
@@ -8,6 +9,7 @@ using std::endl;
 using std::to_string;
 using std::string;
 using namespace splash;
+using namespace std::chrono;
 
 #define SPLASHDIR "/home/ry/Splash/"
 
@@ -49,7 +51,7 @@ void loadData() {
     //indices
     pg.loadBuffer("M_idx", RC, sizeof(unsigned int) * M->N * M->n, M->indices);
     //vector values
-    pg.loadBuffer("v", RC, sizeof(unsigned int) * v->N, v->values);
+    pg.loadBuffer("v", RC, sizeof(REAL) * v->N, v->values);
     //result vector
     pg.loadBuffer("Mv", CL_MEM_WRITE_ONLY, sizeof(REAL) * v->N, nullptr);
   }
@@ -60,7 +62,24 @@ void setKernelArgs() {
     cl::Kernel *k = pg.kernels.at("matrix_vector_mul");
     k->setArg(0, M->n);
     k->setArg(1, M->N);
+
+
+    cout << "Measurement resolution: " <<
+      duration_cast<nanoseconds>(high_resolution_clock::duration(1)).count()
+      << " ns" << endl;
+
+    cout << "measuring sparse matrix data transfer time...   ";
+    auto start = high_resolution_clock::now();
+
     k->setArg(2, *pg.bufs.at("M"));
+
+    auto end  = high_resolution_clock::now();
+    auto dt = duration_cast<nanoseconds>(end-start);
+    cout << dt.count() << " ns, "
+         << duration_cast<microseconds>(dt).count() << " us"
+         << endl;
+
+
     k->setArg(3, *pg.bufs.at("M_ri"));
     k->setArg(4, *pg.bufs.at("M_idx"));
     k->setArg(5, *pg.bufs.at("v"));
@@ -94,30 +113,12 @@ void buildMatricies() {
   v = create_DenseVector(5);
   Mv = create_DenseVector(5);
 
-  sm_set(M, 0, 0, 4);
-  sm_set(M, 0, 1, 4);
-
-  sm_set(M, 1, 0, 4);
-  sm_set(M, 1, 3, 3);
-  sm_set(M, 1, 2, 2);
-
-  sm_set(M, 2, 3, 5);
-  sm_set(M, 2, 2, 7);
-  sm_set(M, 2, 1, 2);
- 
-  sm_set(M, 3, 2, 5);
-  sm_set(M, 3, 1, 3);
-  sm_set(M, 3, 4, 7);
-  sm_set(M, 3, 3, 15);
-
-  sm_set(M, 4, 3, 7);
-  sm_set(M, 4, 4, 7);
-
-  dv_set(v, 0, 1.2);
-  dv_set(v, 1, 3.4);
-  dv_set(v, 2, 5.6);
-  dv_set(v, 3, 6.7);
-  dv_set(v, 4, 7.8);
+  smSetRow(M, 0, {{0,4},{1,4}});
+  smSetRow(M, 1, {{0,4},{3,3},{2,3}});
+  smSetRow(M, 2, {{3,5},{2,7},{1,2}});
+  smSetRow(M, 3, {{2,5},{1,3},{4,7},{3,15}});
+  smSetRow(M, 4, {{3,7},{4,7}});
+  dvSet(v, {{0,1.2},{1,3.4},{2,5.6},{3,6.7},{4,7.8}});
 }
 
 int main()

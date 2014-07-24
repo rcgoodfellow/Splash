@@ -53,8 +53,6 @@ std::vector<PlatformGroup> splash::resolvePlatformGroups()
   return pgroups;
 }
 
-#include <iostream>
-  
 cl::Program* 
 PlatformGroup::loadProgram(std::vector<std::string> filenames, 
     std::string build_opts) {
@@ -62,8 +60,6 @@ PlatformGroup::loadProgram(std::vector<std::string> filenames,
   for(std::string fn : filenames) {
     std::string *s = new std::string(read_file(fn));
     src->push_back(std::make_pair(s->c_str(), s->length()));
-    //std::cout << s.c_str() << std::endl;
-
   }
   return loadProgram(src, build_opts.c_str());
 }
