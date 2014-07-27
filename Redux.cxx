@@ -13,34 +13,16 @@ splash::rdx_das_local_max(size_t elem_per_pe) {
 
       cl_ulong Nl = dev.getInfo<CL_DEVICE_LOCAL_MEM_SIZE>() / sizeof(REAL);
       std::cout << "local: " << Nl << std::endl;
-     
-      //embedded ----------------------------------------------------
-      size_t 
-        max_local = dev.getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>(),
-        L0 = sqrt(max_local),
-        L1 = L0;
 
-      size_t total_thds = ceil(N / (float)elem_per_pe);
-      size_t
-        G0 = sqrt(total_thds),
-        G1 = G0;
-      G0 += (L0 - G0 % L0);
-      G1 += (L1 - G1 % L1);
-      size_t groups = (G0 / L0) * (G1 / L1);
-      //--------------------------------------------------------------
-    
+      pair<cl::NDRange, cl::NDRange> exs = rdx_des_local_max(elem_per_pe)(N, dev);
+      cl::NDRange G = exs.first;
+      cl::NDRange L = exs.second;
+      size_t groups = (G[0] / L[0]) * (G[1] / L[1]);
 
-      size_t required_workgroups = 
-        fmax(
-          ceil(N / (float)(Nl * elem_per_pe)),
-          ceil(N / (256.0 * elem_per_pe))
-          );
+      Nl = L[0] * L[1];
 
-      required_workgroups = groups;
-
-      std::cout << "groups: " << required_workgroups << std::endl;
-      cl_ulong Ng = required_workgroups;
-      //size_t Ng = N / sizeof(REAL);
+      std::cout << "groups: " << groups << std::endl;
+      cl_ulong Ng = groups;
       return {Nl, Ng};
 
     };
@@ -109,7 +91,6 @@ splash::redux_add_kernel(cl::Program splash, ReduxMem m) {
   k.setArg(1, m.N);
   k.setArg(2, m.ipt);
   k.setArg(3, cl::Local(m.Nl * sizeof(REAL)));
-  //k.setArg(2, cl::Local(100 * sizeof(REAL)));
   k.setArg(4, m.grspace);
 
   return k;

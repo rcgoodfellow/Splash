@@ -8,8 +8,10 @@
 #include <random>
 #include <vector>
 #include <iostream>
+#include <chrono>
 
 using namespace std;
+using namespace chrono;
 using namespace splash;
 
 #define SPLASHDIR "/home/ry/Splash/"
@@ -59,16 +61,22 @@ void initOcl() {
 }
 
 double c_sum(double *x, size_t sz) {
-
+  
+  auto start = high_resolution_clock::now();
   double res{0};
   for(size_t i = 0; i<sz; ++i) { res += x[i]; }
+  auto end = high_resolution_clock::now();
+  auto dt = duration_cast<milliseconds>(end-start);
+  cout << "CPU performance" << endl;
+  cout << dt.count() << " ms" << endl;
+  
   return res;
 
 }
 
 void go()
 {
-  unsigned int N = 1e6;
+  unsigned int N = 1e8;
   gen_x(N);
   initOcl();
   
@@ -93,24 +101,17 @@ void go()
 
     r = 0;
     for(size_t i=0; i<rxm.Ng; ++i) { r += rxm.gs[i]; }
+  
+    double cr = c_sum(x, N);
+    cout << "CPU Result: " << cr << endl;
+    cout << "GPU Result: " << r << endl;
   }
 
-  double cr = c_sum(x, N);
-  cout << "CPU Result: " << cr << endl;
-  cout << "GPU Result: " << r << endl;
 }
 
 int main() {
 
-  /*
-  try{go();}
-  catch(cl::Error &e) {
-    cout << e.err() << endl;
-    throw;
-  }
-  */
   go();
-
   return EXIT_SUCCESS;
 
 }
