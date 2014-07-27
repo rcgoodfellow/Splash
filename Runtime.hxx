@@ -44,6 +44,20 @@ struct PlatformGroup {
 
 std::vector<PlatformGroup> resolvePlatformGroups();
 
+struct LibSplash {
+
+  cl::Program::Sources src;
+  std::string src_txt, splashdir, build_opts;
+
+  LibSplash(std::string splashdir);
+
+  cl::Program get(cl::Context ctx);
+
+  private:
+    void readSource();
+
+};
+
 }
 
 #endif

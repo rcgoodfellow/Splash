@@ -1,9 +1,6 @@
-#define __CL_ENABLE_EXCEPTIONS
-#include <CL/cl.hpp>
-
 #include "API.h"
-#include "Utility.hxx"
 #include "Redux.hxx"
+#include "Runtime.hxx"
 
 #include <random>
 #include <vector>
@@ -16,22 +13,22 @@ using namespace splash;
 
 #define SPLASHDIR "/home/ry/Splash/"
 
-//data
+//vector to be reduced
 REAL *x;
 
-//random # generation stuff
+//random number generation stuff
 random_device rd;
 uniform_real_distribution<REAL> v_dst{0.5,10};
 default_random_engine re{rd()};
 
-//ocl stuff
+//OpenCL stuff
 cl::Platform platform;
 vector<cl::Device> gpus;
 cl::Context ctx;
 cl::CommandQueue cqueue;
-cl::Program::Sources sources;
-string src_txt;
-cl::Program splash_prog;
+
+//Splash OpenCL library loader class
+LibSplash libsplash{SPLASHDIR};
 
 void gen_x(unsigned int sz) {
   cout << "Generating input ...         " << flush;
@@ -48,16 +45,6 @@ void initOcl() {
   platform.getDevices(CL_DEVICE_TYPE_GPU, &gpus);
   ctx = cl::Context(gpus);
   cqueue = cl::CommandQueue(ctx, gpus[0]);
-
-  src_txt = read_file(SPLASHDIR "Redux.cl");
-  sources = {
-    make_pair(src_txt.c_str(), src_txt.length())
-  };
-  splash_prog = cl::Program(ctx, sources);
-  try{ splash_prog.build("-I " SPLASHDIR " -DREAL=double"); }
-  catch(cl::Error&) {
-    throw runtime_error(splash_prog.getBuildInfo<CL_PROGRAM_BUILD_LOG>(gpus[0]));
-  }
 }
 
 double c_sum(double *x, size_t sz) {
@@ -74,13 +61,13 @@ double c_sum(double *x, size_t sz) {
 
 }
 
-void go()
-{
+int main() {
+
   unsigned int N = 1e6;
   gen_x(N);
   initOcl();
 
-  ReduxC rc(x, N, ctx, gpus[0], 64, splash_prog, ReduxC::Reducer::Add);
+  ReduxC rc(x, N, ctx, gpus[0], 64, libsplash.get(ctx), ReduxC::Reducer::Add);
 
   cout << rc.G[0] << "," << rc.G[1] << endl;
   cout << rc.L[0] << "," << rc.L[1] << endl;
@@ -88,16 +75,13 @@ void go()
   for(int i=0; i<1; ++i) {
 
     double cr = c_sum(x, N);
-    double r = rc.execute(cqueue); 
+    rc.execute(cqueue); 
+    double r = rc.readback(cqueue);
     cout << "CPU Result: " << cr << endl;
     cout << "GPU Result: " << r << endl;
+
   }
 
-}
-
-int main() {
-
-  go();
   return EXIT_SUCCESS;
 
 }

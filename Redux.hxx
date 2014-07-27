@@ -57,19 +57,21 @@ struct ReduxC {
   cl::Context ctx;
 
   //Splash opencl program (library)
-  cl::Program splashp;
+  cl::Program libsplash;
 
   ReduxC(REAL *x, size_t N, cl::Context ctx, cl::Device dev, size_t ipt, 
       cl::Program splashp, Reducer r);
+  
+  void execute(cl::CommandQueue &q);
+  REAL readback(cl::CommandQueue &q);
 
-  void computeThreadStrategy();
-  void computeMemoryRequirements();
-  void setOclMemory();
-  void initKernel();
-  void setKernel();
+  private:
+    void computeThreadStrategy();
+    void computeMemoryRequirements();
+    void setOclMemory();
+    void initKernel();
+    void setKernel();
 
-  REAL
-  execute(cl::CommandQueue &q);
 };
 
 }

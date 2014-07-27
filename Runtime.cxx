@@ -4,6 +4,8 @@ using namespace splash;
 using std::runtime_error;
 using std::to_string;
 using std::vector;
+using std::string;
+using std::make_pair;
 
 
 void PlatformGroup::resolveGPUs() {
@@ -101,4 +103,39 @@ PlatformGroup::loadBuffer(std::string name, cl_mem_flags mem_flags,
   }
   bufs[name] = b;
   return b;
+}
+
+LibSplash::LibSplash(string splashdir)
+  : splashdir{splashdir} {
+
+    build_opts = "-I " + splashdir + " -DREAL=double";
+    readSource();
+}
+
+void
+LibSplash::readSource() {
+
+  src_txt = read_file(splashdir + "Redux.cl");
+  src = {
+    make_pair(src_txt.c_str(), src_txt.length())
+  };
+
+}
+
+cl::Program
+LibSplash::get(cl::Context ctx) {
+
+  cl::Program libsplash(ctx, src);
+  try{ 
+    
+    libsplash.build(build_opts.c_str()); 
+  
+  }
+  catch(cl::Error&) {
+    throw runtime_error(
+        libsplash.getBuildInfo<CL_PROGRAM_BUILD_LOG>(
+          ctx.getInfo<CL_CONTEXT_DEVICES>()[0]));
+  }
+  
+  return libsplash;
 }

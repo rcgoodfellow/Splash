@@ -76,7 +76,7 @@ void
 ReduxC::initKernel() {
 
   switch(reducer) {
-    case Reducer::Add : k = cl::Kernel(splashp, "redux_add"); break;
+    case Reducer::Add : k = cl::Kernel(libsplash, "redux_add"); break;
     default: throw runtime_error("Not Implemented");
   }
 
@@ -85,6 +85,7 @@ ReduxC::initKernel() {
 void
 ReduxC::setKernel() {
 
+  //See Redux.cl to see how this lines up
   k.setArg(0, b_x);
   k.setArg(1, N);
   k.setArg(2, ipt);
@@ -94,8 +95,8 @@ ReduxC::setKernel() {
 }
 
 ReduxC::ReduxC(REAL *x, size_t N, cl::Context ctx, cl::Device dev, 
-    size_t ipt, cl::Program splashp, Reducer r)
-  : reducer{r}, x{x}, N{N}, ipt{ipt}, dev{dev}, ctx{ctx}, splashp{splashp} {
+    size_t ipt, cl::Program libsplash, Reducer r)
+  : reducer{r}, x{x}, N{N}, ipt{ipt}, dev{dev}, ctx{ctx}, libsplash{libsplash} {
   
     computeThreadStrategy();
     computeMemoryRequirements();
@@ -105,14 +106,22 @@ ReduxC::ReduxC(REAL *x, size_t N, cl::Context ctx, cl::Device dev,
 
 }
 
-REAL
+void
 ReduxC::execute(cl::CommandQueue &q) {
 
   q.enqueueNDRangeKernel(k, cl::NullRange, G, L);
+
+}
+
+REAL
+ReduxC::readback(cl::CommandQueue &q) {
+
   q.enqueueReadBuffer(grspace, CL_TRUE, 0, sizeof(REAL)*Ng, gs);
   REAL r{0};
   for(size_t i=0; i<Ng; ++i) { r += gs[i]; }
   return r;
 
 }
+
+
 
