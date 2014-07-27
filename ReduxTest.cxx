@@ -68,7 +68,7 @@ double c_sum(double *x, size_t sz) {
 
 void go()
 {
-  unsigned int N = 1e4;
+  unsigned int N = 1e6;
   gen_x(N);
   initOcl();
   
@@ -79,6 +79,7 @@ void go()
   cout << exs.first[0] << "," << exs.first[1] << endl;
   cout << exs.second[0] << "," << exs.second[1] << endl;
 
+  double r;
   for(int i=0; i<1; ++i) {
 
     cout << "Enqueue kernel" << std::endl;
@@ -88,12 +89,15 @@ void go()
         exs.second);
 
     cout << "Enqueue readback" << std::endl;
-    cqueue.enqueueReadBuffer(rxm.b_r, CL_TRUE, 0, sizeof(REAL), &rxm.r);
+    cqueue.enqueueReadBuffer(rxm.grspace, CL_TRUE, 0, sizeof(REAL)*rxm.Ng, rxm.gs);
+
+    r = 0;
+    for(size_t i=0; i<rxm.Ng; ++i) { r += rxm.gs[i]; }
   }
 
   double cr = c_sum(x, N);
   cout << "CPU Result: " << cr << endl;
-  cout << "GPU Result: " << rxm.r << endl;
+  cout << "GPU Result: " << r << endl;
 }
 
 int main() {

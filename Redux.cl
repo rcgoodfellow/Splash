@@ -27,7 +27,6 @@ __kernel
 void
 redux_add(
     __global REAL *x, unsigned long N, unsigned long ipt,
-    __global REAL *r,
     __local double *lrspace,
     __global double *grspace
     ) {
@@ -49,7 +48,7 @@ redux_add(
   lrspace[tl] = 0;
   barrier(CLK_LOCAL_MEM_FENCE);
 
-  //if(tg >= N) { return; }
+  if(tg >= N) { return; }
 
   __private REAL acc; //private variable used for accumulations
   acc = 0;
@@ -59,7 +58,7 @@ redux_add(
       acc += x[i];
   }
   lrspace[tl] = acc;
-  //acc = 0;
+  acc = 0;
 
   barrier(CLK_LOCAL_MEM_FENCE);
 
@@ -79,25 +78,10 @@ redux_add(
     acc = 0;
     for(size_t i=0; i<L0; ++i) { acc += lrspace[L0 * i]; }
 
-    //size_t gid = (size_t)(tg/(float)ipt) / (float)(L0 * L1);
-    //size_t gid = 0;
     //put the point in the global reduction store so it can be accumulated
     size_t gid = get_num_groups(0)*get_group_id(0) + get_group_id(1);
     grspace[gid] = acc;
     acc = 0;
-  }
-
-  barrier(CLK_GLOBAL_MEM_FENCE);
-
-  //Accumulate the results of the work groups
-  if(tg == 0) {
-    acc = 0;
-    //size_t lim =  ceil(((N/(float)(ipt))/(float)(L0*L1)));
-    for(size_t i=0; i<(get_num_groups(0)*get_num_groups(1)); ++i) 
-        { acc += grspace[i]; }
-    *r = acc;
-    //*r = get_local_size(0);
-    //*r = lrspace[16*3];
   }
 
 }

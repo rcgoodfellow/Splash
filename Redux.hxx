@@ -23,8 +23,8 @@ namespace splash {
 */
 
 struct ReduxMem {
-  REAL *x, r, *ls, *gs;
-  cl::Buffer b_x, b_r, grspace;
+  REAL *x, *ls, *gs;
+  cl::Buffer b_x, grspace;
   size_t N, Nl, Ng, ipt;
 };
 

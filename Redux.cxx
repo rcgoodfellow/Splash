@@ -14,12 +14,29 @@ splash::rdx_das_local_max(size_t elem_per_pe) {
       cl_ulong Nl = dev.getInfo<CL_DEVICE_LOCAL_MEM_SIZE>() / sizeof(REAL);
       std::cout << "local: " << Nl << std::endl;
      
+      //embedded ----------------------------------------------------
+      size_t 
+        max_local = dev.getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>(),
+        L0 = sqrt(max_local),
+        L1 = L0;
+
+      size_t total_thds = ceil(N / (float)elem_per_pe);
+      size_t
+        G0 = sqrt(total_thds),
+        G1 = G0;
+      G0 += (L0 - G0 % L0);
+      G1 += (L1 - G1 % L1);
+      size_t groups = (G0 / L0) * (G1 / L1);
+      //--------------------------------------------------------------
+    
+
       size_t required_workgroups = 
         fmax(
           ceil(N / (float)(Nl * elem_per_pe)),
           ceil(N / (256.0 * elem_per_pe))
           );
 
+      required_workgroups = groups;
 
       std::cout << "groups: " << required_workgroups << std::endl;
       cl_ulong Ng = required_workgroups;
@@ -40,10 +57,13 @@ splash::rdx_des_local_max(size_t elem_per_pe) {
         max_local = dev.getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>(),
         L0 = sqrt(max_local),
         L1 = L0;
-      size_t 
-        total_thds = ceil(N / (float)elem_per_pe),
-        G0 = fmax(16, sqrt(total_thds)),
-        G1 = fmax(16, ceil(total_thds/(float)G0));
+
+      size_t total_thds = ceil(N / (float)elem_per_pe);
+      size_t
+        G0 = sqrt(total_thds),
+        G1 = G0;
+      G0 += (L0 - G0 % L0);
+      G1 += (L1 - G1 % L1);
       
       return {cl::NDRange{G0, G1}, cl::NDRange{L0, L1}};
 
@@ -70,12 +90,6 @@ splash::redux_alloc(REAL *x, size_t N, cl::Context ctx, cl::Device dev,
       sizeof(REAL) * N, 
       x);
 
-  m.b_r = cl::Buffer(
-      ctx,
-      CL_MEM_WRITE_ONLY,
-      sizeof(REAL),
-      nullptr);
-
   std::cout << "G: (bytes) " << sizeof(REAL) * m.Ng << std::endl;
   m.gs = (REAL*)malloc(sizeof(REAL)*m.Ng);
   m.grspace = cl::Buffer(
@@ -94,10 +108,9 @@ splash::redux_add_kernel(cl::Program splash, ReduxMem m) {
   k.setArg(0, m.b_x);
   k.setArg(1, m.N);
   k.setArg(2, m.ipt);
-  k.setArg(3, m.b_r);
-  k.setArg(4, cl::Local(m.Nl * sizeof(REAL)));
+  k.setArg(3, cl::Local(m.Nl * sizeof(REAL)));
   //k.setArg(2, cl::Local(100 * sizeof(REAL)));
-  k.setArg(5, m.grspace);
+  k.setArg(4, m.grspace);
 
   return k;
 
