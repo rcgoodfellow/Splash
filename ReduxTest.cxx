@@ -32,12 +32,12 @@ cl::CommandQueue cqueue;
 cl::Program::Sources sources;
 string src_txt;
 cl::Program splash_prog;
-cl::Kernel kernel;
-cl::Buffer b_x, b_r;
 
 void gen_x(unsigned int sz) {
+  cout << "Generating input ...         " << flush;
   x = (REAL*)malloc(sizeof(REAL)*sz);
   for(unsigned int i=0; i<sz; ++i) { x[i] = v_dst(re); }
+  cout << "OK" << endl;
 }
  
 void initOcl() {
@@ -76,33 +76,19 @@ double c_sum(double *x, size_t sz) {
 
 void go()
 {
-  unsigned int N = 1e8;
+  unsigned int N = 1e6;
   gen_x(N);
   initOcl();
-  
-  ReduxMem rxm = redux_alloc(x, N, ctx, gpus[0]);
-  pair<cl::NDRange, cl::NDRange> exs = rdx_des_local_max()(N, gpus[0]);
-  kernel = redux_add_kernel(splash_prog, rxm);
 
-  cout << exs.first[0] << "," << exs.first[1] << endl;
-  cout << exs.second[0] << "," << exs.second[1] << endl;
+  ReduxC rc(x, N, ctx, gpus[0], 64, splash_prog);
 
-  double r;
+  cout << rc.G[0] << "," << rc.G[1] << endl;
+  cout << rc.L[0] << "," << rc.L[1] << endl;
+
   for(int i=0; i<1; ++i) {
 
-    cout << "Enqueue kernel" << std::endl;
-    cqueue.enqueueNDRangeKernel(kernel,
-        cl::NullRange,
-        exs.first,
-        exs.second);
-
-    cout << "Enqueue readback" << std::endl;
-    cqueue.enqueueReadBuffer(rxm.grspace, CL_TRUE, 0, sizeof(REAL)*rxm.Ng, rxm.gs);
-
-    r = 0;
-    for(size_t i=0; i<rxm.Ng; ++i) { r += rxm.gs[i]; }
-  
     double cr = c_sum(x, N);
+    double r = rc.execute(cqueue); 
     cout << "CPU Result: " << cr << endl;
     cout << "GPU Result: " << r << endl;
   }

@@ -5,94 +5,93 @@ using std::pair;
 
 #include <iostream>
 
-DAllocStrategy
-splash::rdx_das_local_max(size_t elem_per_pe) {
+void
+ReduxC::computeMemoryRequirements() {
 
-  return 
-    [elem_per_pe](size_t N, cl::Device dev) -> pair<size_t, size_t> {
+    //The global memory is the nuber of required workgroups becuase each
+    //workgroup eventually writes its result back to a point in the global 
+    //array. Since the redux kernel is a 2 dimensional kernel, the total 
+    //number of workgroups is computed as the product of the number of 
+    //workgroups in each dimension.
+    size_t gmem = (G[0] / L[0]) * (G[1] / L[1]);
 
-      cl_ulong Nl = dev.getInfo<CL_DEVICE_LOCAL_MEM_SIZE>() / sizeof(REAL);
-      std::cout << "local: " << Nl << std::endl;
+    //The local memory is computed as the size of the workgroup. Each
+    //thread within a workgroup reduces @elem_per_pe elements onto a single
+    //point in the LDS, thus the LDS must be the size of the workgroup
+    size_t lmem = L[0] * L[1];
 
-      pair<cl::NDRange, cl::NDRange> exs = rdx_des_local_max(elem_per_pe)(N, dev);
-      cl::NDRange G = exs.first;
-      cl::NDRange L = exs.second;
-      size_t groups = (G[0] / L[0]) * (G[1] / L[1]);
-
-      Nl = L[0] * L[1];
-
-      std::cout << "groups: " << groups << std::endl;
-      cl_ulong Ng = groups;
-      return {Nl, Ng};
-
-    };
-
+    Nl = lmem;
+    Ng = gmem;
 }
 
-DExecStrategy
-splash::rdx_des_local_max(size_t elem_per_pe) {
+void
+ReduxC::computeThreadStrategy() {
   
-  return
-    [elem_per_pe](size_t N, cl::Device dev) -> pair<cl::NDRange, cl::NDRange> {
- 
-      size_t 
-        max_local = dev.getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>(),
-        L0 = sqrt(max_local),
-        L1 = L0;
+    //The local execution range is the maximum square (2 dimensions)
+    size_t 
+      max_local = dev.getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>(),
+      L0 = sqrt(max_local),
+      L1 = L0;
 
-      size_t total_thds = ceil(N / (float)elem_per_pe);
-      size_t
-        G0 = sqrt(total_thds),
-        G1 = G0;
-      G0 += (L0 - G0 % L0);
-      G1 += (L1 - G1 % L1);
-      
-      return {cl::NDRange{G0, G1}, cl::NDRange{L0, L1}};
+    //The total number of threads is the size of the input divided by the
+    //number of elements each thread will consume.
+    size_t total_thds = ceil(N / (float)ipt);
+    
+    //Turn the total number of threads into a square allocation
+    size_t
+      G0 = sqrt(total_thds),
+      G1 = G0;
 
-    };
+    //Ensure that each dimension of the square is a multiple of the
+    //corresponding local execution range (OpenCL requirement for
+    //defined behavior).
+    G0 += (L0 - G0 % L0);
+    G1 += (L1 - G1 % L1);
+    
+    G = cl::NDRange{G0, G1};
+    L = cl::NDRange{L0, L1};
 
 }
 
 
-ReduxMem
-splash::redux_alloc(REAL *x, size_t N, cl::Context ctx, cl::Device dev, 
-    DAllocStrategy das) {
+ReduxC::ReduxC(REAL *x, size_t N, cl::Context ctx, cl::Device dev, 
+    size_t ipt, cl::Program splashp)
+  : x{x}, N{N}, ipt{ipt}, dev{dev} {
 
-  ReduxMem m;
-  m.x = x;
-  m.N = N;
-  pair<int,int> p = das(N, dev);
-  m.Nl = p.first;
-  m.Ng = p.second;
-  m.ipt = 64;
+    computeThreadStrategy();
+    computeMemoryRequirements();
 
-  m.b_x = cl::Buffer(
+  b_x = cl::Buffer(
       ctx, 
       CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, 
       sizeof(REAL) * N, 
       x);
 
-  std::cout << "G: (bytes) " << sizeof(REAL) * m.Ng << std::endl;
-  m.gs = (REAL*)malloc(sizeof(REAL)*m.Ng);
-  m.grspace = cl::Buffer(
+  gs = (REAL*)malloc(sizeof(REAL)*Ng);
+  grspace = cl::Buffer(
       ctx,
       CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
-      sizeof(REAL) * m.Ng,
-      m.gs);
+      sizeof(REAL) * Ng,
+      gs);
+  
+  k = cl::Kernel(splashp, "redux_add");
 
-  return m;
-}
-
-cl::Kernel
-splash::redux_add_kernel(cl::Program splash, ReduxMem m) {
-
-  cl::Kernel k = cl::Kernel(splash, "redux_add");
-  k.setArg(0, m.b_x);
-  k.setArg(1, m.N);
-  k.setArg(2, m.ipt);
-  k.setArg(3, cl::Local(m.Nl * sizeof(REAL)));
-  k.setArg(4, m.grspace);
-
-  return k;
+  k.setArg(0, b_x);
+  k.setArg(1, N);
+  k.setArg(2, ipt);
+  k.setArg(3, cl::Local(Nl * sizeof(REAL)));
+  k.setArg(4, grspace);
 
 }
+
+REAL
+ReduxC::execute(cl::CommandQueue &q) {
+
+  q.enqueueNDRangeKernel(k, cl::NullRange, G, L);
+  q.enqueueReadBuffer(grspace, CL_TRUE, 0, sizeof(REAL)*Ng, gs);
+  REAL r{0};
+  for(size_t i=0; i<Ng; ++i) { r += gs[i]; }
+  return r;
+
+}
+
