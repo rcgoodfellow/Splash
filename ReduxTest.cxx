@@ -18,7 +18,8 @@ REAL *x;
 
 //random number generation stuff
 random_device rd;
-uniform_real_distribution<REAL> v_dst{0.5,10};
+uniform_real_distribution<REAL> i_dst{0.5, 10};
+normal_distribution<REAL> v_dst;
 default_random_engine re{rd()};
 
 //OpenCL stuff
@@ -32,6 +33,7 @@ LibSplash libsplash{SPLASHDIR};
 
 void gen_x(unsigned int sz) {
   cout << "Generating input ...         " << flush;
+  v_dst = normal_distribution<REAL>{i_dst(re), 15};
   x = (REAL*)malloc(sizeof(REAL)*sz);
   for(unsigned int i=0; i<sz; ++i) { x[i] = v_dst(re); }
   cout << "OK" << endl;
@@ -63,7 +65,7 @@ double c_sum(double *x, size_t sz) {
 
 int main() {
 
-  unsigned int N = 1e7;
+  unsigned int N = 1e6;
   gen_x(N);
   initOcl();
 
@@ -76,7 +78,14 @@ int main() {
 
     double cr = c_sum(x, N);
     rc.execute(cqueue); 
-    double r = rc.readback(cqueue);
+    rc.readback(cqueue);
+    
+    ReduxC rc2(rc.gs, rc.Ng, ctx, gpus[0], 64, libsplash.get(ctx), 
+        ReduxC::Reducer::Add);
+    rc2.execute(cqueue);
+    rc2.readback(cqueue);
+    double r = rc2.gs[0];
+
     cout << "CPU Result: " << cr << endl;
     cout << "GPU Result: " << r << endl;
 

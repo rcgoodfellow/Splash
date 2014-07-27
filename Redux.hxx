@@ -63,7 +63,7 @@ struct ReduxC {
       cl::Program splashp, Reducer r);
   
   void execute(cl::CommandQueue &q);
-  REAL readback(cl::CommandQueue &q);
+  void readback(cl::CommandQueue &q);
 
   private:
     void computeThreadStrategy();

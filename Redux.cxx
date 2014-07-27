@@ -113,13 +113,10 @@ ReduxC::execute(cl::CommandQueue &q) {
 
 }
 
-REAL
+void
 ReduxC::readback(cl::CommandQueue &q) {
 
   q.enqueueReadBuffer(grspace, CL_TRUE, 0, sizeof(REAL)*Ng, gs);
-  REAL r{0};
-  for(size_t i=0; i<Ng; ++i) { r += gs[i]; }
-  return r;
 
 }
 
