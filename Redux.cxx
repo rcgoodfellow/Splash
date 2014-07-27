@@ -2,6 +2,7 @@
 
 using namespace splash;
 using std::pair;
+using std::runtime_error;
 
 #include <iostream>
 
@@ -53,13 +54,8 @@ ReduxC::computeThreadStrategy() {
 
 }
 
-
-ReduxC::ReduxC(REAL *x, size_t N, cl::Context ctx, cl::Device dev, 
-    size_t ipt, cl::Program splashp)
-  : x{x}, N{N}, ipt{ipt}, dev{dev} {
-
-    computeThreadStrategy();
-    computeMemoryRequirements();
+void
+ReduxC::setOclMemory() {
 
   b_x = cl::Buffer(
       ctx, 
@@ -73,14 +69,39 @@ ReduxC::ReduxC(REAL *x, size_t N, cl::Context ctx, cl::Device dev,
       CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
       sizeof(REAL) * Ng,
       gs);
-  
-  k = cl::Kernel(splashp, "redux_add");
+
+}
+
+void
+ReduxC::initKernel() {
+
+  switch(reducer) {
+    case Reducer::Add : k = cl::Kernel(splashp, "redux_add"); break;
+    default: throw runtime_error("Not Implemented");
+  }
+
+}
+
+void
+ReduxC::setKernel() {
 
   k.setArg(0, b_x);
   k.setArg(1, N);
   k.setArg(2, ipt);
   k.setArg(3, cl::Local(Nl * sizeof(REAL)));
   k.setArg(4, grspace);
+
+}
+
+ReduxC::ReduxC(REAL *x, size_t N, cl::Context ctx, cl::Device dev, 
+    size_t ipt, cl::Program splashp, Reducer r)
+  : reducer{r}, x{x}, N{N}, ipt{ipt}, dev{dev}, ctx{ctx}, splashp{splashp} {
+  
+    computeThreadStrategy();
+    computeMemoryRequirements();
+    setOclMemory();
+    initKernel();
+    setKernel();
 
 }
 

@@ -80,7 +80,7 @@ void go()
   gen_x(N);
   initOcl();
 
-  ReduxC rc(x, N, ctx, gpus[0], 64, splash_prog);
+  ReduxC rc(x, N, ctx, gpus[0], 64, splash_prog, ReduxC::Reducer::Add);
 
   cout << rc.G[0] << "," << rc.G[1] << endl;
   cout << rc.L[0] << "," << rc.L[1] << endl;

@@ -13,6 +13,7 @@
 #include "API.h"
 #include "Engine.hxx"
 #include <cmath>
+#include <stdexcept>
 
 namespace splash {
 
@@ -21,7 +22,13 @@ namespace splash {
  * The redux computation data object encapsulates a redux computation and 
  * associated data
  */
+
+
 struct ReduxC {
+
+  enum class Reducer { Add, Subtract, Multiply, Divide };
+  Reducer reducer;
+
   //Input vector and associated OpenCL buffer
   REAL *x;
   cl::Buffer b_x;
@@ -46,11 +53,20 @@ struct ReduxC {
   //Device in use for computation
   cl::Device dev;
 
+  //Context in use for computation
+  cl::Context ctx;
+
+  //Splash opencl program (library)
+  cl::Program splashp;
+
   ReduxC(REAL *x, size_t N, cl::Context ctx, cl::Device dev, size_t ipt, 
-      cl::Program splashp);
+      cl::Program splashp, Reducer r);
 
   void computeThreadStrategy();
   void computeMemoryRequirements();
+  void setOclMemory();
+  void initKernel();
+  void setKernel();
 
   REAL
   execute(cl::CommandQueue &q);
