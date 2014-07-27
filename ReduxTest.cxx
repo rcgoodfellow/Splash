@@ -63,7 +63,7 @@ double c_sum(double *x, size_t sz) {
 
 int main() {
 
-  unsigned int N = 1e6;
+  unsigned int N = 1e7;
   gen_x(N);
   initOcl();
 
