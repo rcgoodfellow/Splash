@@ -1,5 +1,13 @@
 #ifndef SPLASH_RUNTIME_HXX
 #define SPLASH_RUNTIME_HXX
+/******************************************************************************
+ *  The Splash Project
+ *
+ *  reduction operations - 20 July '14
+ *  ~ ry
+ *
+ *  This file contains host code for interacting with the OpenCL runtime
+ */
 
 #include <vector>
 #include <unordered_map>
@@ -11,7 +19,6 @@
 #include "Utility.hxx"
 
 namespace splash {
-
   
 struct PlatformGroup {
   cl::Platform platform;
