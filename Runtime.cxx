@@ -115,9 +115,13 @@ LibSplash::LibSplash(string splashdir)
 void
 LibSplash::readSource() {
 
-  src_txt = read_file(splashdir + "Redux.cl");
+  redux_st = read_file(splashdir + "Redux.cl");
+  elemental_st = read_file(splashdir + "Elementals.cl");
+
   src = {
-    make_pair(src_txt.c_str(), src_txt.length())
+    make_pair(redux_st.c_str(), redux_st.length())
+    ,
+    make_pair(elemental_st.c_str(), elemental_st.length())
   };
 
 }

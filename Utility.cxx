@@ -8,6 +8,10 @@ using namespace std;
 
 std::string splash::read_file(std::string filename) {
   std::ifstream t(filename);
+  if(!t.good()) {
+    t.close();
+    throw runtime_error("Unable to read file: " + filename);
+  }
   std::stringstream buffer;
   buffer << t.rdbuf();
 

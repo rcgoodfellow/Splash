@@ -13,21 +13,21 @@
  * reduces the vector @x using addition
  *
  *  Parameters:
- *    - @x - the vector to be reduced
- *    - @N - the size of the input
- *    - @ipt - the number of input items handled per thread
- *    - @lrspace - the local reduction space e.g., a local memory space for
- *                 the compute units to use for reduction processing
- *    - @grspace - the global reduction space e.g., a global memory space for
- *                 reduction processing
+ *    - @x - The vector to be reduced.
+ *    - @N - The size of the input.
+ *    - @ipt - The number of input items handled per thread.
+ *    - @lrspace - The local reduction space e.g., a local memory space for
+ *                 the compute units to use for reduction processing.
+ *    - @result - The memory in which per-workgroup results are placed based
+ *                on workgroup id.
  *  
  */
 __kernel
 void
 redux_add(
     __global REAL *x, unsigned long N, unsigned long ipt,
-    __local double *lrspace,
-    __global double *result
+    __local REAL *lrspace,
+    __global REAL *result
     ) {
 
   //global and local (workgroup) thread dimensions

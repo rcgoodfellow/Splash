@@ -47,7 +47,11 @@ std::vector<PlatformGroup> resolvePlatformGroups();
 struct LibSplash {
 
   cl::Program::Sources src;
-  std::string src_txt, splashdir, build_opts;
+  std::string splashdir, build_opts;
+
+  //source text strings
+  std::string redux_st,
+              elemental_st;
 
   LibSplash(std::string splashdir);
 
