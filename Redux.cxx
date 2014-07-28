@@ -134,5 +134,15 @@ ReduxC::readback(cl::CommandQueue &q) {
 
 }
 
+ReduxC
+ReduxC::fullReduction(cl::CommandQueue &q) {
+
+  execute(q);
+  ReduxC subredux(grspace, Ng, ctx, dev, ipt, libsplash, reducer);
+  subredux.execute(q);
+  return subredux;
+
+}
+
 
 

@@ -69,6 +69,7 @@ struct ReduxC {
   
   void execute(cl::CommandQueue &q);
   void readback(cl::CommandQueue &q);
+  ReduxC fullReduction(cl::CommandQueue &q);
 
   private:
     void computeThreadStrategy();
