@@ -119,8 +119,7 @@ LibSplash::readSource() {
   elemental_st = read_file(splashdir + "Elementals.cl");
 
   src = {
-    make_pair(redux_st.c_str(), redux_st.length())
-    ,
+    make_pair(redux_st.c_str(), redux_st.length()),
     make_pair(elemental_st.c_str(), elemental_st.length())
   };
 

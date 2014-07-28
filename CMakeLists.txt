@@ -12,12 +12,14 @@ SET(CMAKE_SHARED_LINKER_FLAGS "-std=c++11")
 ADD_LIBRARY(SplashCore SHARED 
   SparseMatrix.c SparseMatrix.h
   Redux.cxx Redux.hxx
+  Elementals.cxx Elementals.hxx
   Vector.c Vector.h
   )
 ADD_LIBRARY(SplashRuntime SHARED 
   Runtime.cxx Runtime.hxx 
   Engine.hxx
   Memory.hxx Memory.cxx
+  Compute.hxx Compute.cxx
   SparseMatrix.cxx SparseMatrix.hxx
   Utility.cxx Utility.hxx
   )
@@ -37,4 +39,6 @@ TARGET_LINK_LIBRARIES(SparseMatrixVectorMulTest SplashCore SplashRuntime OpenCL)
 ADD_EXECUTABLE(ReduxTest ReduxTest.cxx)
 TARGET_LINK_LIBRARIES(ReduxTest SplashCore SplashRuntime OpenCL)
 
+ADD_EXECUTABLE(ElementalTests ElementalTests.cxx)
+TARGET_LINK_LIBRARIES(ElementalTests SplashCore SplashRuntime OpenCL)
 

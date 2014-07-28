@@ -14,5 +14,6 @@
 #include <CL/cl.hpp>
 #include "Memory.hxx"
 #include "Threads.hxx"
+#include "Compute.hxx"
 
 #endif

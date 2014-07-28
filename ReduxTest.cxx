@@ -1,7 +1,6 @@
 #include "Redux.hxx"
 #include "Runtime.hxx"
 
-#include <vector>
 #include <iostream>
 #include <chrono>
 
@@ -36,8 +35,8 @@ int main() {
   ReduxC rc(x, N, genv.ctx, genv.dev, 64, libsplash.get(genv.ctx), 
       ReduxC::Reducer::Add);
 
-  cout << rc.G[0] << "," << rc.G[1] << endl;
-  cout << rc.L[0] << "," << rc.L[1] << endl;
+  cout << rc.redux_shape.G[0] << "," << rc.redux_shape.G[1] << endl;
+  cout << rc.redux_shape.L[0] << "," << rc.redux_shape.L[1] << endl;
 
   double cr = c_sum(x, N);
   ReduxC rc2 = rc.fullReduction(genv.q);
