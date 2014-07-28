@@ -55,13 +55,15 @@ ReduxC::computeThreadStrategy() {
 }
 
 void
-ReduxC::setOclMemory() {
+ReduxC::setOclMemory(bool alloc_bx) {
 
-  b_x = cl::Buffer(
-      ctx, 
-      CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, 
-      sizeof(REAL) * N, 
-      x);
+  if(alloc_bx) {
+    b_x = cl::Buffer(
+        ctx, 
+        CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, 
+        sizeof(REAL) * N, 
+        x);
+  }
 
   gs = (REAL*)malloc(sizeof(REAL)*Ng);
   grspace = cl::Buffer(
@@ -100,10 +102,22 @@ ReduxC::ReduxC(REAL *x, size_t N, cl::Context ctx, cl::Device dev,
   
     computeThreadStrategy();
     computeMemoryRequirements();
-    setOclMemory();
+    setOclMemory(true);
     initKernel();
     setKernel();
 
+}
+
+ReduxC::ReduxC(cl::Buffer x, size_t N, cl::Context ctx, cl::Device dev, 
+    size_t ipt, cl::Program libsplash, Reducer r)
+  : reducer{r}, x{nullptr}, b_x{x}, N{N}, ipt{ipt}, dev{dev}, ctx{ctx}, 
+    libsplash{libsplash} {
+
+    computeThreadStrategy();
+    computeMemoryRequirements();
+    setOclMemory(false);
+    initKernel();
+    setKernel();
 }
 
 void

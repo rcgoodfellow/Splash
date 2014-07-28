@@ -78,9 +78,9 @@ int main() {
 
     double cr = c_sum(x, N);
     rc.execute(cqueue); 
-    rc.readback(cqueue);
+    //rc.readback(cqueue);
     
-    ReduxC rc2(rc.gs, rc.Ng, ctx, gpus[0], 64, libsplash.get(ctx), 
+    ReduxC rc2(rc.grspace, rc.Ng, ctx, gpus[0], 64, libsplash.get(ctx), 
         ReduxC::Reducer::Add);
     rc2.execute(cqueue);
     rc2.readback(cqueue);

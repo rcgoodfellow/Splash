@@ -59,7 +59,12 @@ struct ReduxC {
   //Splash opencl program (library)
   cl::Program libsplash;
 
+  //Redux computation where @x originates on the host
   ReduxC(REAL *x, size_t N, cl::Context ctx, cl::Device dev, size_t ipt, 
+      cl::Program splashp, Reducer r);
+
+  //Redux computation where @x is already on the GPU
+  ReduxC(cl::Buffer x, size_t N, cl::Context ctx, cl::Device dev, size_t ipt,
       cl::Program splashp, Reducer r);
   
   void execute(cl::CommandQueue &q);
@@ -68,7 +73,7 @@ struct ReduxC {
   private:
     void computeThreadStrategy();
     void computeMemoryRequirements();
-    void setOclMemory();
+    void setOclMemory(bool alloc_bx);
     void initKernel();
     void setKernel();
 
