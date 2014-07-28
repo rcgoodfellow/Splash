@@ -58,6 +58,17 @@ struct LibSplash {
 
 };
 
+struct GPUEnv {
+
+  cl::Platform platform;
+  cl::Device dev;
+  cl::Context ctx;
+  cl::CommandQueue q;
+
+  GPUEnv();
+
+};
+
 }
 
 #endif

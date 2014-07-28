@@ -6,7 +6,14 @@
 #include <stdlib.h>
 #include <string>
 #include <stdexcept>
+#include <random>
+
+namespace splash {
 
 std::string read_file(std::string filename);
+
+REAL* random_vector(size_t sz);
+
+}
 
 #endif

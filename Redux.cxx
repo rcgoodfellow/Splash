@@ -65,12 +65,12 @@ ReduxC::setOclMemory(bool alloc_bx) {
         x);
   }
 
-  gs = (REAL*)malloc(sizeof(REAL)*Ng);
-  grspace = cl::Buffer(
+  result = (REAL*)malloc(sizeof(REAL)*Ng);
+  b_result = cl::Buffer(
       ctx,
       CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
       sizeof(REAL) * Ng,
-      gs);
+      result);
 
 }
 
@@ -92,7 +92,7 @@ ReduxC::setKernel() {
   k.setArg(1, N);
   k.setArg(2, ipt);
   k.setArg(3, cl::Local(Nl * sizeof(REAL)));
-  k.setArg(4, grspace);
+  k.setArg(4, b_result);
 
 }
 
@@ -130,7 +130,7 @@ ReduxC::execute(cl::CommandQueue &q) {
 void
 ReduxC::readback(cl::CommandQueue &q) {
 
-  q.enqueueReadBuffer(grspace, CL_TRUE, 0, sizeof(REAL)*Ng, gs);
+  q.enqueueReadBuffer(b_result, CL_TRUE, 0, sizeof(REAL)*Ng, result);
 
 }
 
@@ -138,7 +138,7 @@ ReduxC
 ReduxC::fullReduction(cl::CommandQueue &q) {
 
   execute(q);
-  ReduxC subredux(grspace, Ng, ctx, dev, ipt, libsplash, reducer);
+  ReduxC subredux(b_result, Ng, ctx, dev, ipt, libsplash, reducer);
   subredux.execute(q);
   return subredux;
 

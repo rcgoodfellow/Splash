@@ -139,3 +139,17 @@ LibSplash::get(cl::Context ctx) {
   
   return libsplash;
 }
+
+GPUEnv::GPUEnv() {
+
+  vector<cl::Platform> platforms;
+  cl::Platform::get(&platforms);
+  platform = platforms[0];
+
+  vector<cl::Device> gpus;
+  platform.getDevices(CL_DEVICE_TYPE_GPU, &gpus);
+  dev = gpus[0];
+  ctx = cl::Context(dev);
+  q = cl::CommandQueue(ctx, dev);
+
+}

@@ -1,8 +1,6 @@
-#include "API.h"
 #include "Redux.hxx"
 #include "Runtime.hxx"
 
-#include <random>
 #include <vector>
 #include <iostream>
 #include <chrono>
@@ -13,44 +11,11 @@ using namespace splash;
 
 #define SPLASHDIR "/home/ry/Splash/"
 
-//vector to be reduced
-REAL *x;
-
-//random number generation stuff
-random_device rd;
-uniform_real_distribution<REAL> i_dst{0.5, 10};
-normal_distribution<REAL> v_dst;
-default_random_engine re{rd()};
-
-//OpenCL stuff
-cl::Platform platform;
-vector<cl::Device> gpus;
-cl::Context ctx;
-cl::CommandQueue cqueue;
-
-//Splash OpenCL library loader class
-LibSplash libsplash{SPLASHDIR};
-
-void gen_x(unsigned int sz) {
-  cout << "Generating input ...         " << flush;
-  v_dst = normal_distribution<REAL>{i_dst(re), 15};
-  x = (REAL*)malloc(sizeof(REAL)*sz);
-  for(unsigned int i=0; i<sz; ++i) { x[i] = v_dst(re); }
-  cout << "OK" << endl;
-}
- 
-void initOcl() {
-  vector<cl::Platform> platforms;
-  cl::Platform::get(&platforms);
-  platform = platforms[0];
-
-  platform.getDevices(CL_DEVICE_TYPE_GPU, &gpus);
-  ctx = cl::Context(gpus);
-  cqueue = cl::CommandQueue(ctx, gpus[0]);
-}
+//Splash stuff
+GPUEnv genv; //gpu environment
+LibSplash libsplash{SPLASHDIR}; //splash opencl library loader
 
 double c_sum(double *x, size_t sz) {
-  
   auto start = high_resolution_clock::now();
   double res{0};
   for(size_t i = 0; i<sz; ++i) { res += x[i]; }
@@ -60,32 +25,27 @@ double c_sum(double *x, size_t sz) {
   cout << dt.count() << " ms" << endl;
   
   return res;
-
 }
 
 int main() {
-
   unsigned int N = 1e6;
-  gen_x(N);
-  initOcl();
+  cout << "Generating input ...         " << flush;
+  REAL *x = random_vector(N);
+  cout << "OK" << endl;
 
-  ReduxC rc(x, N, ctx, gpus[0], 64, libsplash.get(ctx), ReduxC::Reducer::Add);
+  ReduxC rc(x, N, genv.ctx, genv.dev, 64, libsplash.get(genv.ctx), 
+      ReduxC::Reducer::Add);
 
   cout << rc.G[0] << "," << rc.G[1] << endl;
   cout << rc.L[0] << "," << rc.L[1] << endl;
 
-  for(int i=0; i<1; ++i) {
+  double cr = c_sum(x, N);
+  ReduxC rc2 = rc.fullReduction(genv.q);
+  rc2.readback(genv.q);
+  double r = *rc2.result;
 
-    double cr = c_sum(x, N);
-    ReduxC rc2 = rc.fullReduction(cqueue);
-    rc2.readback(cqueue);
-    double r = rc2.gs[0];
-
-    cout << "CPU Result: " << cr << endl;
-    cout << "GPU Result: " << r << endl;
-
-  }
+  cout << "CPU Result: " << cr << endl;
+  cout << "GPU Result: " << r << endl;
 
   return EXIT_SUCCESS;
-
 }

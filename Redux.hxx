@@ -34,8 +34,8 @@ struct ReduxC {
   cl::Buffer b_x;
 
   //Result vector and associated OpenCL buffer
-  REAL *gs;
-  cl::Buffer grspace;
+  REAL *result;
+  cl::Buffer b_result;
   
   size_t 
     N,    //Input size.
