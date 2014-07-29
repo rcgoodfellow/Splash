@@ -36,7 +36,7 @@ struct ReduxC : public VectorC {
       cl::Program splashp, Reducer r);
 
   //Redux computation where @x is already on the GPU
-  ReduxC(cl::Buffer x, size_t N, cl::Context ctx, cl::Device dev, size_t ipt,
+  ReduxC(cl::Buffer b_x, size_t N, cl::Context ctx, cl::Device dev, size_t ipt,
       cl::Program splashp, Reducer r);
 
   void execute(cl::CommandQueue &q);

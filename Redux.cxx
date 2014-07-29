@@ -1,10 +1,35 @@
 #include "Redux.hxx"
 
 using namespace splash;
-using std::pair;
 using std::runtime_error;
 
-#include <iostream>
+void
+ReduxC::computeReduxShape() {
+  
+    //The local execution range is the maximum square (2 dimensions)
+    size_t 
+      max_local = dev.getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>(),
+      L0 = sqrt(max_local),
+      L1 = L0;
+
+    //The total number of threads is the size of the input divided by the
+    //number of elements each thread will consume.
+    size_t total_thds = ceil(N / (float)ipt);
+    
+    //Turn the total number of threads into a square allocation
+    size_t
+      G0 = sqrt(total_thds),
+      G1 = G0;
+
+    //Ensure that each dimension of the square is a multiple of the
+    //corresponding local execution range (OpenCL requirement for
+    //defined behavior).
+    G0 += (L0 - G0 % L0);
+    G1 += (L1 - G1 % L1);
+   
+    redux_shape = {{G0, G1}, {L0, L1}};
+
+}
 
 void
 ReduxC::initMemory() {
@@ -39,34 +64,6 @@ ReduxC::initMemory() {
       CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
       sizeof(REAL) * Nr,
       result);
-
-}
-
-void
-ReduxC::computeReduxShape() {
-  
-    //The local execution range is the maximum square (2 dimensions)
-    size_t 
-      max_local = dev.getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>(),
-      L0 = sqrt(max_local),
-      L1 = L0;
-
-    //The total number of threads is the size of the input divided by the
-    //number of elements each thread will consume.
-    size_t total_thds = ceil(N / (float)ipt);
-    
-    //Turn the total number of threads into a square allocation
-    size_t
-      G0 = sqrt(total_thds),
-      G1 = G0;
-
-    //Ensure that each dimension of the square is a multiple of the
-    //corresponding local execution range (OpenCL requirement for
-    //defined behavior).
-    G0 += (L0 - G0 % L0);
-    G1 += (L1 - G1 % L1);
-   
-    redux_shape = {{G0, G1}, {L0, L1}};
 
 }
 
