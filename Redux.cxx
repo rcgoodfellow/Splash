@@ -14,7 +14,7 @@ ReduxC::computeReduxShape() {
 
     //The total number of threads is the size of the input divided by the
     //number of elements each thread will consume.
-    size_t total_thds = ceil(N / (float)ipt);
+    size_t total_thds = ceil(Ni / (float)ipt);
     
     //Turn the total number of threads into a square allocation
     size_t
@@ -39,7 +39,7 @@ ReduxC::initMemory() {
     b_x = cl::Buffer(
         ctx, 
         CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, 
-        sizeof(REAL) * N, 
+        sizeof(REAL) * Ni, 
         x);
   }
 
@@ -50,13 +50,6 @@ ReduxC::initMemory() {
   //workgroups in each dimension.
   Nr = (redux_shape.G[0] / redux_shape.L[0]) * (redux_shape.G[1] / redux_shape.L[1]);
 
-  /**** no allocation is necessary here because local kernel memory is 
-        allocated by the opencl runtime driver ****/
-
-  //The local memory is computed as the size of the workgroup. Each
-  //thread within a workgroup reduces @elem_per_pe elements onto a single
-  //point in the LDS, thus the LDS must be the size of the workgroup
-  Nl = redux_shape.L[0] * redux_shape.L[1];
   
   result = (REAL*)malloc(sizeof(REAL)*Nr);
   b_result = cl::Buffer(
@@ -64,6 +57,16 @@ ReduxC::initMemory() {
       CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
       sizeof(REAL) * Nr,
       result);
+
+
+  //The local memory is computed as the size of the workgroup. Each
+  //thread within a workgroup reduces @elem_per_pe elements onto a single
+  //point in the LDS, thus the LDS must be the size of the workgroup
+  Nl = redux_shape.L[0] * redux_shape.L[1];
+  
+  /**** no allocation is necessary here because local kernel memory is 
+        allocated by the opencl runtime driver ****/
+  
 
 }
 
@@ -82,17 +85,17 @@ ReduxC::setKernel() {
 
   //See Redux.cl to see how this lines up
   redux_kernel.setArg(0, b_x);
-  redux_kernel.setArg(1, N);
+  redux_kernel.setArg(1, Ni);
   redux_kernel.setArg(2, ipt);
   redux_kernel.setArg(3, cl::Local(Nl * sizeof(REAL)));
   redux_kernel.setArg(4, b_result);
 
 }
 
-ReduxC::ReduxC(REAL *x, size_t N, cl::Context ctx, cl::Device dev, size_t ipt, 
+ReduxC::ReduxC(REAL *x, size_t Ni, cl::Context ctx, cl::Device dev, size_t ipt, 
     cl::Program libsplash, Reducer r)
   
-  : VectorC{x, N, ipt, dev, ctx, libsplash},
+  : Computation{x, Ni, ipt, dev, ctx, libsplash},
     reducer{r} {
  
     computeReduxShape();
@@ -105,7 +108,7 @@ ReduxC::ReduxC(REAL *x, size_t N, cl::Context ctx, cl::Device dev, size_t ipt,
 ReduxC::ReduxC(cl::Buffer b_x, size_t N, cl::Context ctx, cl::Device dev, 
     size_t ipt, cl::Program libsplash, Reducer r)
   
-  : VectorC{b_x, N, ipt, dev, ctx, libsplash}, 
+  : Computation{b_x, N, ipt, dev, ctx, libsplash}, 
     reducer{r} {
 
     computeReduxShape();
@@ -118,16 +121,11 @@ void
 ReduxC::execute(cl::CommandQueue &q) {
   
   q.enqueueNDRangeKernel(redux_kernel, cl::NullRange, redux_shape.G, redux_shape.L);
-
-}
-
-ReduxC
-ReduxC::fullReduction(cl::CommandQueue &q) {
-
-  execute(q);
   ReduxC subredux(b_result, Nr, ctx, dev, ipt, libsplash, reducer);
-  subredux.execute(q);
-  return subredux;
+  q.enqueueNDRangeKernel(subredux.redux_kernel, cl::NullRange, subredux.redux_shape.G,
+      subredux.redux_shape.L);
+  //subredux.execute(q);
+  *this = subredux;
 
 }
 

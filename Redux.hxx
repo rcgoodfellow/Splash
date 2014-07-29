@@ -20,7 +20,7 @@ namespace splash {
  * The redux computation object encapsulates a redux computation and 
  * associated data
  */
-struct ReduxC : public VectorC {
+struct ReduxC : public Computation {
 
   enum class Reducer { Add, Subtract, Multiply, Divide };
   Reducer reducer;
@@ -40,7 +40,6 @@ struct ReduxC : public VectorC {
       cl::Program splashp, Reducer r);
 
   void execute(cl::CommandQueue &q);
-  ReduxC fullReduction(cl::CommandQueue &q);
 
   private:
     //Compute the shape of the computation

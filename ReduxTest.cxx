@@ -39,9 +39,9 @@ int main() {
   cout << rc.redux_shape.L[0] << "," << rc.redux_shape.L[1] << endl;
 
   double cr = c_sum(x, N);
-  ReduxC rc2 = rc.fullReduction(genv.q);
-  rc2.readback(genv.q);
-  double r = *rc2.result;
+  rc.execute(genv.q);
+  rc.readback(genv.q);
+  double r = *rc.result;
 
   cout << "CPU Result: " << cr << endl;
   cout << "GPU Result: " << r << endl;

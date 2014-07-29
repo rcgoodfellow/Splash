@@ -25,7 +25,7 @@ namespace splash {
  */
 
 
-struct NormC : public VectorC {
+struct NormC : public Computation {
 
   ReduxC redux;
 

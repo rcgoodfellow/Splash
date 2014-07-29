@@ -5,7 +5,7 @@ using namespace splash;
 NormC::NormC(REAL *x, size_t N, cl::Context ctx, cl::Device dev, size_t ipt,
       cl::Program splashp) 
 
-  : VectorC{x, N, ipt, dev, ctx, splashp},
+  : Computation{x, N, ipt, dev, ctx, splashp},
     redux{x, N, ctx, dev, ipt, libsplash, ReduxC::Reducer::Add} {
 
     computeShape();
@@ -17,7 +17,7 @@ NormC::NormC(REAL *x, size_t N, cl::Context ctx, cl::Device dev, size_t ipt,
 NormC::NormC(cl::Buffer b_x, size_t N, cl::Context ctx, cl::Device dev, size_t ipt,
       cl::Program splashp)
 
-  : VectorC{b_x, N, ipt, dev, ctx, splashp},
+  : Computation{b_x, N, ipt, dev, ctx, splashp},
     redux{x, N, ctx, dev, ipt, libsplash, ReduxC::Reducer::Add} {
     
     computeShape();
@@ -36,16 +36,6 @@ NormC::computeShape() {
 
 void
 NormC::initMemory() {
-
-  /*
-  if(!resident_input) {
-    b_x = cl::Buffer(
-        ctx,
-        CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-        sizeof(REAL),
-        x);
-  }
-  */
 
   Nr = 1;
   b_result = cl::Buffer(
@@ -72,14 +62,14 @@ NormC::setKernel() {
 void
 NormC::execute(cl::CommandQueue &q) {
 
-  ReduxC rc = redux.fullReduction(q);
+  redux.execute(q);
   //--
-  rc.readback(q);
-  REAL r = *rc.result;
+  redux.readback(q);
+  REAL r = *redux.result;
   std::cout << "expect: " << sqrt(r) << std::endl;
   //--
 
-  b_x = rc.b_result;
+  b_x = redux.b_result;
   ksqrt.setArg(0, b_x);
   
   q.enqueueNDRangeKernel(ksqrt, cl::NullRange, ksqrt_shape.G, ksqrt_shape.L);
